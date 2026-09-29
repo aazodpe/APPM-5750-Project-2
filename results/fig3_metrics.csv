@@ -1,0 +1,4 @@
+dataset,num_train,num_eval,nonlinearity,depth,weight_var,bias_var,accuracy,corr_binned,corr_raw,spearman_raw,calib_slope,ml_amplitude,calib_slope_ml,mean_pred_var,mean_mse
+mnist,5000,10000,tanh,3,2.0,0.2,0.9694,0.958335,0.449694,0.653659,0.1944,0.170681,1.13897,0.0646407,0.0113255
+mnist,5000,10000,relu,3,2.0,0.2,0.9681,0.970112,0.435791,0.635321,0.108169,0.0921252,1.17415,0.117282,0.0116028
+mnist,5000,10000,gelu,3,2.0,0.2,0.9685,0.974237,0.435931,0.635707,0.0922201,0.0775936,1.1885,0.134263,0.0114274
