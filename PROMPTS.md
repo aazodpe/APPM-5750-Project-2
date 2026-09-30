@@ -57,3 +57,36 @@ It recommended Option 2 and asked three multiple-choice questions.
 ## Follow-up prompts
 
 *(Add any later prompts here, e.g. "explain eq. 9 in gpr.py line by line", "why does GELU's C-map sit below ReLU's?")*
+
+---
+
+## Session 2: 2026-09-29 -- audit and finishing pass
+
+### Prompt 1
+
+> Can you read the project instructions, and see if everything is made correctly. Let me know what you need from me for full completion.
+
+**What the LLM did:** Re-read the assignment PDF and checked the repo against each rubric line. It then actually ran the grader's test rather than reasoning about it: cloned this repo into an empty temp directory, ran `docker build --no-cache`, and ran the container end to end. Both exited 0, and the container's numbers matched the committed `results/*.csv` exactly.
+
+It reported five gaps: (1) `git remote` still pointed at `brain-research/nngp`, so `git clone <my-repo>` could not work; (2) `figures/paper_fig3.png` did not exist, leaving a broken image where the rubric asks for a side-by-side; (3) the paper's correlation numbers in README section 2 were placeholders; (4) section 4.1 was near the word limit; (5) stale in-class copies of `Dockerfile` and `uncertainty_plot.py` sit in the parent directory.
+
+**Navigator note:** the useful part was that it ran the clean-clone test instead of eyeballing the Dockerfile. The build passing is the thing the rubric actually pays 25 points for.
+
+### Prompt 2
+
+> repo url: https://github.com/aazodpe/Stat-5720-Project-2.git -- I've added a paper which I think is the one we need.
+
+**What the LLM did:**
+
+1. Confirmed the PDF is the right paper (Lee et al., ICLR 2018) and found Figure 3 on page 8.
+2. Extracted the legend values. The text layer interleaves the two panels, so it used word x-coordinates to decide which legend belongs to which panel: the MNIST-50k panel (x approx 135-300) carries Tanh 0.9330 / ReLU 0.9573, and CIFAR-45k (x approx 300-470) carries 0.7428 / 0.8223. This is worth knowing for the interview -- a naive text extraction pairs them the wrong way round.
+3. Rendered page 8 at 300 dpi and cropped `figures/paper_fig3.png` (MNIST panel) and `figures/paper_fig3_both_panels.png`.
+4. Filled in README section 2, corrected the runtime estimates (the measured run is about 12 minutes, not 5), and recorded the clean-clone test result in section 6.
+
+**Navigator notes (to fill in):**
+- [ ] Check the cropped figure against page 8 of the PDF myself.
+- [ ] Confirm the 0.9330 / 0.9573 pairing by looking at the MNIST panel legend directly.
+
+### On our numbers being *higher* than the paper's
+
+Worth having an answer ready for the interview, since it looks backwards at first: we beat the paper's correlation (0.958 vs 0.933 tanh, 0.970 vs 0.957 ReLU) while using 10x less training data. The README's explanation is that the binned correlation is a statistic about the *spread* of the bins, not about accuracy. With 5k training points the posterior variances are larger and cover a wider range, so the 100-point bins spread out along the x-axis and the trend fits more cleanly. A higher binned correlation here does not mean a better model -- our accuracy is lower than the paper's. This is a good example of a metric that is not monotone in model quality.

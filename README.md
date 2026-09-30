@@ -11,13 +11,13 @@ The code builds directly on the official release, [github.com/brain-research/nng
 ## 1. Quick start (clean-clone test)
 
 ```bash
-git clone <TODO: your-repo-url>
-cd <TODO: your-repo-name>
+git clone https://github.com/aazodpe/Stat-5720-Project-2.git
+cd Stat-5720-Project-2
 docker build -t nngp-project .
 docker run nngp-project
 ```
 
-On a 2-core machine the build takes about 1 minute and the run takes about 5 minutes. The run prints every metric to the terminal. The figures are written to `/nngp/output` **inside** the container. To copy them to your own machine, mount a folder:
+On a 2-core machine the build takes about 1 minute and the default `all` run takes roughly 10–15 minutes (most of it in the 10,000-test-point posterior solves; it was 12 minutes on the Windows/WSL2 machine used for the clean-clone test). The run prints every metric to the terminal. The figures are written to `/nngp/output` **inside** the container. To copy them to your own machine, mount a folder:
 
 | Shell | Command |
 |---|---|
@@ -30,9 +30,9 @@ Other modes (the first argument after the image name):
 
 | Command | What it does | Time |
 |---|---|---|
-| `docker run nngp-project` (= `all`) | Figure 3 reproduction, then the GELU extension sweep | ~5 min |
-| `docker run nngp-project fig3` | Figure 3 only (tanh, ReLU and GELU at 5k training points) | ~3 min |
-| `docker run nngp-project extension` | Extension sweep only | ~2 min |
+| `docker run nngp-project` (= `all`) | Figure 3 reproduction, then the GELU extension sweep | ~12 min |
+| `docker run nngp-project fig3` | Figure 3 only (tanh, ReLU and GELU at 5k training points) | ~7 min |
+| `docker run nngp-project extension` | Extension sweep only | ~5 min |
 | `docker run nngp-project validate` | Correctness checks for the kernel lookup grids (Section 4.3) | ~1 min |
 | `docker run nngp-project --num_train=1000 --nonlinearities=relu ...` | Any flags are passed straight to `uncertainty_plot.py` | varies |
 | `docker run -e NUM_TRAIN=10000 nngp-project fig3` | Larger training set (needs about 4 GB of RAM for Docker) | longer |
@@ -47,15 +47,19 @@ Other modes (the first argument after the image name):
 
 | Original (Lee et al. 2018, Fig. 3, MNIST panel) | This reproduction (MNIST, 5k train, 10k test) |
 |---|---|
-| ![paper](figures/paper_fig3.png) <br> *TODO: crop Fig. 3 from the arXiv PDF and save it as `figures/paper_fig3.png`* | ![ours](results/fig3_mnist_tanh_relu.png) |
+| ![paper](figures/paper_fig3.png) | ![ours](results/fig3_mnist_tanh_relu.png) |
 
 | | Paper (MNIST-50k) | Ours (MNIST-5k) |
 |---|---|---|
-| Tanh corr. (binned) | *TODO: copy from paper legend* | **0.958** |
-| ReLU corr. (binned) | *TODO: copy from paper legend* | **0.970** |
-| Test accuracy (tanh / ReLU) | n/a | 96.9% / 96.8% |
+| Tanh corr. (binned) | 0.9330 | **0.9583** |
+| ReLU corr. (binned) | 0.9573 | **0.9701** |
+| Test accuracy (tanh / ReLU) | not reported | 96.9% / 96.8% |
 
-**Result.** The paper's claim reproduces. For both activations the binned predicted variance and the binned realized MSE are strongly and monotonically related (r ≈ 0.96–0.97). Points with low predicted variance are almost always classified correctly, and the highest-variance bins hold most of the error. As in the paper, ReLU produces larger variances than tanh at the same hyperparameters, so its points spread further along the x-axis.
+The paper's legend values are read off the MNIST-50k panel of Figure 3 (the
+CIFAR-45k panel reports 0.7428 / 0.8223). The full two-panel crop is kept as
+[`figures/paper_fig3_both_panels.png`](figures/paper_fig3_both_panels.png).
+
+**Result.** The paper's claim reproduces. For both activations the binned predicted variance and the binned realized MSE are strongly and monotonically related, and our correlations land slightly *above* the paper's (0.958 vs. 0.933 for tanh, 0.970 vs. 0.957 for ReLU). We read the small gap as a consequence of the smaller training set rather than a discrepancy: with 5k training points the predicted variances are larger and spread over a wider range, which spaces the 100-point bins out and makes the trend easier to fit. The qualitative structure is the same as the paper's panel. Points with low predicted variance are almost always classified correctly, and the highest-variance bins hold most of the error. As in the paper, ReLU produces larger variances than tanh at the same hyperparameters, so its points spread further along the x-axis, and both panels show the same upward-curving, fan-shaped envelope.
 
 ### How the code maps to the paper
 
@@ -93,18 +97,16 @@ The environment fixes from class are unchanged: `xrange` → `range`, and `np.lo
 
 ### 4.1 What we did, why, and what we found
 
-The paper tests only two activations, tanh and ReLU. Since then, **GELU** (φ(x) = x·Φ(x), where Φ is the Gaussian CDF) has become the default activation in transformers. That makes it a natural question for Figure 3: does the NNGP's "uncertainty tracks error" property depend on the activation, or is it a general feature of the Bayesian posterior? GELU is a useful test case. It behaves like ReLU for large |x|, but it is smooth and non-monotonic near zero. It also has no simple closed-form kernel, so the numerical-integration route in Sec. 2.5 of the paper is actually needed.
+The paper tests only two activations, tanh and ReLU. Since then, **GELU** (φ(x) = x·Φ(x), where Φ is the Gaussian CDF) has become the default activation in transformers. That makes it a natural question for Figure 3: does the NNGP's "uncertainty tracks error" property depend on the activation, or is it a general feature of the Bayesian posterior? GELU is a useful test case: it behaves like ReLU for large |x| but is smooth and non-monotonic near zero, and it has no simple closed-form kernel, so the numerical-integration route in Sec. 2.5 is actually needed.
 
-**Implementation.** The kernel code in `nngp.py` accepts any φ, but only once a lookup table of E[φ(z₁)φ(z₂)] exists over (variance, correlation). The repo's own table builder allocates about 1 GB per variance row on every CPU core, which crashes a normal Docker VM. We wrote `make_grid.py`, which computes the same quadrature in small NumPy chunks and writes the same file format. Before trusting it with GELU, we checked it three ways (Section 4.3). It regenerates the shipped tanh and ReLU tables to within 5×10⁻¹², it matches ReLU's exact arc-cosine kernel, and it agrees with Monte-Carlo estimates for GELU. We then reran the Figure 3 pipeline with φ = GELU at the paper's hyperparameters (depth 3, σ_w² = 2.0, σ_b² = 0.2), sweeping the number of training points from 250 to 5,000 for all three activations.
+**Implementation.** The kernel code in `nngp.py` accepts any φ, but only once a lookup table of E[φ(z₁)φ(z₂)] exists over (variance, correlation). The repo's own table builder allocates about 1 GB per variance row on every CPU core, which crashes a normal Docker VM, so we wrote `make_grid.py` to compute the same quadrature in small NumPy chunks and write the same file format. We checked it three ways before trusting it with GELU (Section 4.3): it regenerates the shipped tanh and ReLU tables to within 5×10⁻¹², matches ReLU's exact arc-cosine kernel, and agrees with Monte-Carlo estimates for GELU. We then reran the Figure 3 pipeline with φ = GELU at the paper's hyperparameters (depth 3, σ_w² = 2.0, σ_b² = 0.2), sweeping the number of training points from 250 to 5,000 for all three activations.
 
 **Findings.**
 1. **The Figure 3 result holds for GELU.** The binned correlation is 0.974 at 5k training points, slightly higher than ReLU (0.970) and tanh (0.958). It stays between 0.97 and 0.98 across the whole sweep ([`results/fig3_mnist_tanh_relu_gelu.png`](results/fig3_mnist_tanh_relu_gelu.png), [`results/ext_sweep.png`](results/ext_sweep.png)). Test accuracy is essentially the same as ReLU at every size (96.9% at 5k), and slightly ahead of tanh when training data is small.
-2. **Correlated does not mean calibrated.** The raw predicted variance overestimates the real MSE by about 5× for tanh, 9× for ReLU and 11× for GELU. The paper only claims correlation, and our figure shows why: the kernel's overall scale comes from σ_w² and σ_b², not from the labels. If we fit a single kernel amplitude by maximum likelihood (a = tᵀK⁻¹t / n, which needs no extra computation), the slope of MSE against variance becomes about 1.1–1.2 for **all three** activations. So the activations differ mostly in kernel *scale*, not in how well their uncertainty ranks the test points.
+2. **Correlated does not mean calibrated.** The raw predicted variance overestimates the real MSE by about 5× for tanh, 9× for ReLU and 11× for GELU. The paper only claims correlation, and our figure shows why: the kernel's scale comes from σ_w² and σ_b², not from the labels. Fitting one kernel amplitude by maximum likelihood (a = tᵀK⁻¹t / n, no extra computation) brings the slope of MSE against variance to about 1.1–1.2 for **all three** activations. So the activations differ mostly in kernel *scale*, not in how well their uncertainty ranks the test points.
 3. **Why GELU sits between tanh and ReLU.** [`results/ext_cmap.png`](results/ext_cmap.png) plots the layer-to-layer correlation map from Sec. 3.2 of the paper. GELU's map is close to ReLU's but maps dissimilar inputs to lower correlations, so after three layers its kernel is less "washed out" than ReLU's while keeping ReLU's scale growth. That matches its ReLU-like accuracy and its slightly better uncertainty ranking.
 
 **Takeaway.** The NNGP's uncertainty-error correlation is robust to the activation choice, including one that is smooth and non-monotonic. Its absolute scale is not, and a one-parameter amplitude fit is enough to make the variance a usable error estimate.
-
-*(Section 4.1 is about 490 words. Recount after editing; the limit is 300–500.)*
 
 ### 4.2 Extension figures
 
@@ -157,7 +159,7 @@ Along the way we found a limitation of the original code. The quadrature grid in
 | Missing GELU grid | Shipped in `grid_data/`. If deleted, the Docker build regenerates it with `make_grid.py` |
 | Outputs "disappear" (they stay inside the container) | Printed summary, `-v` instructions, committed `results/` |
 
-**Testing:** we ran the full clone → build → run sequence from a fresh `git clone` into an empty directory with `docker build --no-cache`. *TODO: add a line after a classmate runs it on their machine, as suggested in lecture.*
+**Testing:** the full `git clone` → `docker build --no-cache` → `docker run` sequence was run from a fresh clone into an empty directory (Docker 29.8.1, Windows 11 / WSL2 backend, amd64). Build and run both exited 0, and every number the container produced matched the committed `results/*.csv` exactly — tanh 0.958335, ReLU 0.970112, GELU 0.974237, and all 15 rows of the sweep. *Still to do: have a classmate run the same sequence on their machine, as suggested in lecture.*
 
 ---
 
