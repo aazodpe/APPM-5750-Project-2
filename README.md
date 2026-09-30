@@ -11,8 +11,8 @@ The code builds directly on the official release, [github.com/brain-research/nng
 ## 1. Quick start (clean-clone test)
 
 ```bash
-git clone https://github.com/aazodpe/Stat-5720-Project-2.git
-cd Stat-5720-Project-2
+git clone https://github.com/aazodpe/APPM-5750-Project-2.git
+cd APPM-5750-Project-2
 docker build -t nngp-project .
 docker run nngp-project
 ```

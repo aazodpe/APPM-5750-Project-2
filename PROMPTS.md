@@ -42,7 +42,7 @@ It recommended Option 2 and asked three multiple-choice questions.
 - [ ] Read `activations.py` and `make_grid.py`. Do the formulas match `_compute_qmap_grid` in `nngp.py`?
 - [ ] Run `docker run nngp-project validate` myself.
 - [ ] Check the claim in README §4.1 (3) against `results/ext_cmap.png`.
-- [ ] Add the paper's Fig. 3 image and the paper's correlation numbers to README §2.
+- [x] Add the paper's Fig. 3 image and the paper's correlation numbers to README §2.  *(done in session 2)*
 - [ ] Have a classmate run the clean-clone test (Lecture 9, "Test with a Friend").
 
 ---
@@ -56,7 +56,9 @@ It recommended Option 2 and asked three multiple-choice questions.
 
 ## Follow-up prompts
 
-*(Add any later prompts here, e.g. "explain eq. 9 in gpr.py line by line", "why does GELU's C-map sit below ReLU's?")*
+Later sessions are logged below. Questions still worth asking the LLM (or
+answering myself) before the interview: "explain Eq. 9 in `gpr.py` line by
+line", "why does GELU's C-map sit below ReLU's?"
 
 ---
 
@@ -75,6 +77,9 @@ It reported five gaps: (1) `git remote` still pointed at `brain-research/nngp`, 
 ### Prompt 2
 
 > repo url: https://github.com/aazodpe/Stat-5720-Project-2.git -- I've added a paper which I think is the one we need.
+
+*(The repo was later renamed to `APPM-5750-Project-2` to match the course
+number on the Lecture 9 title slide; GitHub redirects the old URL.)*
 
 **What the LLM did:**
 
