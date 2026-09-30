@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Written for APPM 5750 Project 2 (Fall 2026) by Atharva Zodpe.
+# Not part of the original brain-research/nngp release; this file is new.
+# Developed with LLM assistance -- see PROMPTS.md.
+#
 # Entry point for the Docker image.  Usage: run_all.sh [all|fig3|extension|validate|--flags...]
 set -euo pipefail
 cd /nngp

@@ -1,3 +1,8 @@
+# Written for APPM 5750 Project 2 (Fall 2026) by Atharva Zodpe.
+# Not part of the original brain-research/nngp release; this file is new.
+# It builds on that repository's public API (Apache 2.0) and on the paper
+# cited below.  Developed with LLM assistance -- see PROMPTS.md.
+#
 # Project 2 extension: activation functions for the NNGP kernel.
 #
 # The NNGP kernel recursion (Lee et al. 2018, Section 2.3, Eq. 4) is

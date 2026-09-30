@@ -86,10 +86,12 @@ CIFAR-45k panel reports 0.7428 / 0.8223). The full two-panel crop is kept as
 | `make_grid.py` | new | Memory-safe NumPy builder for the Sec. 2.5 lookup grid, plus `--validate` |
 | `grid_data/grid_gelu_*` | new (generated) | GELU lookup grid, built by `make_grid.py` |
 | `extension_gelu.py` | new | Extension experiments and figures |
-| `data/mnist/*.gz` | new (bundled) | The standard MNIST files, so the run needs no download |
+| `data/mnist/*.gz` | new (bundled) | The standard MNIST files, so the run needs no download (credit in [`data/README.md`](data/README.md)) |
+| `results/*` | new (generated) | Our figures and metrics, committed so they can be read without running anything |
+| `figures/*` | new (third-party) | Paper Figure 3 crops for the Section 2 comparison (credit in [`figures/README.md`](figures/README.md)) |
 | `.gitattributes`, `.dockerignore`, `.gitignore` | new | Reproducibility hygiene (see Section 6) |
 
-The environment fixes from class are unchanged: `xrange` → `range`, and `np.load(..., allow_pickle=True, encoding='latin1')`.
+No original Google `.py` file was edited in the repository — see Section 8. The environment fixes from class are applied at Docker build time, not committed: `xrange` → `range`, and `np.load(..., allow_pickle=True, encoding='latin1')`.
 
 ---
 
@@ -167,7 +169,47 @@ Along the way we found a limitation of the original code. The quadrature grid in
 
 The extension was pair-programmed with Claude (Anthropic) as the "driver", following the lecture's recommendation. [`PROMPTS.md`](PROMPTS.md) logs the prompts, what the LLM generated, and what was checked or changed.
 
-## 8. References
+## 8. Provenance: what is original, what is ours
+
+This project is built on someone else's code by design, so it is worth being
+precise about the boundary.
+
+**Not our work, reused under Apache 2.0** ([`LICENSE`](LICENSE), unchanged):
+`nngp.py`, `gpr.py`, `interp.py`, `load_dataset.py`, `run_experiments.py`,
+`nngp_test.py`, `__init__.py`, `CONTRIBUTING.md`, and the shipped tanh/ReLU
+lookup grids in `grid_data/`. Every one of these is **byte-for-byte identical
+to the upstream release** -- verify with:
+
+```bash
+git remote add upstream https://github.com/brain-research/nngp.git
+git fetch upstream
+git diff upstream/master HEAD --stat -- nngp.py gpr.py interp.py load_dataset.py
+```
+
+which prints nothing. The two environment fixes (`xrange` and `allow_pickle`)
+are applied by `sed` at Docker build time rather than committed, so the
+original source stays pristine and the diff stays honest. The original project
+README is preserved as [`README_original_nngp.md`](README_original_nngp.md).
+
+**Adapted from class materials:** `uncertainty_plot.py` started from the
+in-class version by R. Cox and keeps its Google copyright header plus a
+notice listing our changes, as Apache 2.0 section 4(b) requires.
+
+**Ours:** `activations.py`, `make_grid.py`, `extension_gelu.py`, `run_all.sh`,
+the `Dockerfile` additions, the GELU grid in `grid_data/`, everything in
+`results/`, and this README. Each carries an authorship header.
+
+**Third-party material reproduced with attribution:** the paper figure crops
+in [`figures/`](figures/) (copyright the paper's authors, reproduced for
+scholarly comparison) and the MNIST files in [`data/`](data/) (LeCun, Cortes &
+Burges). Both directories have a README stating source and terms.
+
+**LLM assistance** is disclosed in Section 7 and logged prompt-by-prompt in
+[`PROMPTS.md`](PROMPTS.md), including what was checked and what was changed.
+
+---
+
+## 9. References
 
 - J. Lee, Y. Bahri, R. Novak, S. S. Schoenholz, J. Pennington, J. Sohl-Dickstein. *Deep Neural Networks as Gaussian Processes.* ICLR 2018. [arXiv:1711.00165](https://arxiv.org/abs/1711.00165)
 - Original code: [github.com/brain-research/nngp](https://github.com/brain-research/nngp) (Apache 2.0)
