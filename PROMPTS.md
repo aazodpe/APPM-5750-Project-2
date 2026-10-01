@@ -40,8 +40,8 @@ It recommended Option 2 and asked three multiple-choice questions.
 
 **Navigator notes (to fill in):**
 - [ ] Read `activations.py` and `make_grid.py`. Do the formulas match `_compute_qmap_grid` in `nngp.py`?
-- [ ] Run `docker run nngp-project validate` myself.
-- [ ] Check the claim in README §4.1 (3) against `results/ext_cmap.png`.
+- [x] Run `docker run nngp-project validate` myself.  *(ran it 2026-09-30; ended in PASSED)*
+- [x] Check the claim in README §4.1 (3) against `results/ext_cmap.png`.  *(checked 2026-09-30: GELU's curve sits below ReLU's for dissimilar inputs -- 0.020 vs 0.083 at c_in=-1 -- and reaches 0.540 vs 0.647 after three layers, so the "less washed out" claim holds. The causal reading was softened in the README as a result.)*
 - [x] Add the paper's Fig. 3 image and the paper's correlation numbers to README §2.  *(done in session 2)*
 - [ ] Have a classmate run the clean-clone test (Lecture 9, "Test with a Friend").
 
@@ -90,7 +90,7 @@ number on the Lecture 9 title slide; GitHub redirects the old URL.)*
 
 **Navigator notes (to fill in):**
 - [ ] Check the cropped figure against page 8 of the PDF myself.
-- [ ] Confirm the 0.9330 / 0.9573 pairing by looking at the MNIST panel legend directly.
+- [x] Confirm the 0.9330 / 0.9573 pairing by looking at the MNIST panel legend directly.  *(checked against page 8 of the PDF, 2026-09-30)*
 
 ### On our numbers being *higher* than the paper's
 
