@@ -89,7 +89,7 @@ number on the Lecture 9 title slide; GitHub redirects the old URL.)*
 4. Filled in README section 2, corrected the runtime estimates (the measured run is about 12 minutes, not 5), and recorded the clean-clone test result in section 6.
 
 **Navigator notes (to fill in):**
-- [ ] Check the cropped figure against page 8 of the PDF myself.
+- [x] Check the cropped figure against page 8 of the PDF myself.  *(2026-09-30: opened page 8 and confirmed the crop is the MNIST-50k panel and that its legend reads Tanh-corr:0.9330 / ReLU-corr:0.9573.)*
 - [x] Confirm the 0.9330 / 0.9573 pairing by looking at the MNIST panel legend directly.  *(checked against page 8 of the PDF, 2026-09-30)*
 
 ### Prompt 3
