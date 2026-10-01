@@ -17,7 +17,7 @@ docker build -t nngp-project .
 docker run nngp-project
 ```
 
-On a 2-core machine the build takes about 1 minute and the default `all` run takes roughly 10–15 minutes (most of it in the 10,000-test-point posterior solves; it was 12 minutes on the Windows/WSL2 machine used for the clean-clone test). The run prints every metric to the terminal. The figures are written to `/nngp/output` **inside** the container. To copy them to your own machine, mount a folder:
+On a 2-core machine the build itself takes well under a minute, plus a one-off download of the ~1.1 GB `tensorflow/tensorflow:1.15.0-py3` base image the first time (several minutes on a slow connection). The default `all` run takes roughly 10–15 minutes (most of it in the 10,000-test-point posterior solves; it was 12 minutes on the Windows/WSL2 machine used for the clean-clone test). The run prints every metric to the terminal. The figures are written to `/nngp/output` **inside** the container. To copy them to your own machine, mount a folder:
 
 | Shell | Command |
 |---|---|
@@ -105,7 +105,7 @@ The paper tests only tanh and ReLU. Since then **GELU** (φ(x) = x·Φ(x), Φ th
 
 **Findings.**
 1. **The Figure 3 result holds for GELU.** The binned correlation is 0.974 at 5k training points, slightly higher than ReLU (0.970) and tanh (0.958). It stays between 0.97 and 0.98 across the whole sweep ([`results/fig3_mnist_tanh_relu_gelu.png`](results/fig3_mnist_tanh_relu_gelu.png), [`results/ext_sweep.png`](results/ext_sweep.png)). Test accuracy is essentially the same as ReLU at every size (96.9% at 5k), and slightly ahead of tanh when training data is small.
-2. **Correlated does not mean calibrated.** The raw predicted variance overestimates the real MSE by about 5× for tanh, 9× for ReLU and 11× for GELU. The paper only claims correlation, and our figure shows why: the kernel's scale comes from σ_w² and σ_b², not from the labels. Fitting one kernel amplitude by maximum likelihood (a = tᵀK⁻¹t / n, no extra computation) brings the slope of MSE against variance to about 1.1–1.2 for **all three** activations. So the activations differ mostly in kernel *scale*, not in how well their uncertainty ranks the test points.
+2. **Correlated does not mean calibrated.** The raw predicted variance overestimates the real MSE by about 5× for tanh, 9× for ReLU and 11× for GELU (reciprocal of the fitted slope, `calib_slope`). The paper only claims correlation, and our figure shows why: the kernel's scale comes from σ_w² and σ_b², not from the labels. Fitting one kernel amplitude by maximum likelihood (a = tᵀK⁻¹t / n, no extra computation) brings the slope of MSE against variance to about 1.1–1.2 for **all three** activations. So the activations differ mostly in kernel *scale*, not in how well their uncertainty ranks the test points.
 3. **Why GELU sits between tanh and ReLU.** [`results/ext_cmap.png`](results/ext_cmap.png) plots the layer-to-layer correlation map from Sec. 3.2 of the paper. GELU's map is close to ReLU's but maps dissimilar inputs to lower correlations, so after three layers its kernel is less "washed out" than ReLU's while keeping ReLU's scale growth. That is consistent with its ReLU-like accuracy and slightly better uncertainty ranking, though the map alone does not establish cause.
 
 **Takeaway.** The NNGP's uncertainty-error correlation is robust to the activation choice, including one that is smooth and non-monotonic. Its absolute scale is not, and a one-parameter amplitude fit is enough to make the variance a usable error estimate.
