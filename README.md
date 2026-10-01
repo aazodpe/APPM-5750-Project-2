@@ -122,7 +122,8 @@ Raw numbers: [`results/fig3_metrics.csv`](results/fig3_metrics.csv), [`results/e
 
 ### 4.3 How we tested the new code
 
-`docker run nngp-project validate` runs all three checks:
+`docker run nngp-project validate` runs four checks and exits non-zero if any
+of them fails:
 
 ```
 [validate] relu  max|our - shipped|: q_aa 1.95e-14   q_ab 5.12e-12
@@ -130,8 +131,30 @@ Raw numbers: [`results/fig3_metrics.csv`](results/fig3_metrics.csv), [`results/e
 [validate] relu vs closed-form arc-cosine kernel (v <= 5): max relative error 1.22e-04
 [validate] gelu grid q_ab(v=2.0, c=+0.603) = 0.58472   MC = 0.58472   |z| = 0.00
 ...
+[validate] gelu  max|tf - numpy| on the z grid: 4.44e-16
+[validate] relu  max|tf - numpy| on the z grid: 0.00e+00
+[validate] tanh  max|tf - numpy| on the z grid: 0.00e+00
 [validate] PASSED
 ```
+
+1. **Regression against the shipped grids.** Our NumPy builder reproduces the
+   authors' tanh and ReLU tables to ~1e-12. Because those tables were generated
+   in TensorFlow by the original authors, this doubles as a cross-framework
+   check for those two activations.
+2. **Against a closed form.** ReLU's grid matches the exact arc-cosine kernel
+   (Cho & Saul, 2009) where the discretisation is valid.
+3. **Monte Carlo.** GELU has no simple closed form, so sampled estimates of
+   E[φ(z₁)φ(z₂)] are compared against the grid at four (v, c) points.
+4. **Activation parity.** Every activation is written twice — in TensorFlow
+   (`activations.py`, which enters the kernel graph) and in NumPy
+   (`make_grid.py`, which builds the grid). Nothing structurally forces the two
+   to agree, and if they drifted the grid would describe a different function
+   from the one the kernel applies, with every downstream number wrong but
+   plausible. Check 1 covers tanh and ReLU for free; GELU has no shipped grid,
+   so `check_activation_parity()` compares the two implementations directly on
+   the integration grid. We confirmed the check actually bites by swapping the
+   NumPy GELU for its tanh approximation: the gap jumps to 4.7e-04 and
+   `validate` fails.
 
 Along the way we found a limitation of the original code. The quadrature grid in `nngp.py` is fixed to z ∈ [−10, 10] no matter what the variance is, so for pre-activation variances above about 10 the Gaussian tails get cut off. ReLU's error against the exact kernel rises to 1% at v = 10 and 9% at v = 20. At the Figure 3 hyperparameters the variances stay around 1–3, so our results are unaffected, but deep or large-σ_w² settings would be.
 
